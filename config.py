@@ -54,8 +54,11 @@ DETECTOR_MAX_TOKENS = 400
 # down BEFORE you code it, and to put the numbers in your README. Whatever you
 # decide, it goes here.
 
-WEIGHT_MODEL_SIGNAL = 0.5
-WEIGHT_STYLE_SIGNAL = 0.5
+# The model signal counts more: on the calibration texts, cosmetic edits (a
+# dash, a fragment, an exclamation mark) dropped the style signal from ~0.8
+# to ~0.1 but only moved the model signal from ~0.8 to ~0.6.
+WEIGHT_MODEL_SIGNAL = 0.7
+WEIGHT_STYLE_SIGNAL = 0.3
 
 
 # ─── Thresholds (Milestone 5) ────────────────────────────────────────────────

@@ -31,6 +31,8 @@ from flask import Flask, jsonify, request
 import audit
 import config
 import detector
+import scoring
+import stylometry
 
 app = Flask(__name__)
 
@@ -235,12 +237,18 @@ def submit():
         return _reject(creator_id, "detector_unavailable",
                        "The checker isn't available right now. Try again later.", 503)
 
+    # Signal two, and the combining rule from scoring.py.
+    style_score = stylometry.style_signal(text)
+    combined_score = scoring.combine_signals(model_score, style_score)
+
+    # How far the score leans from a coin flip, toward whichever side it leans
+    # (0.5 – 1.0). Not the probability of AI — see the contract in milestone1.md.
+    confidence = round(max(combined_score, 1.0 - combined_score), 4)
+
     content_id = str(uuid.uuid4())
 
-    # Placeholders until milestone 4 (second signal, combined score) and
-    # milestone 5 (the real guess and label).
+    # Placeholders until milestone 5 (the real guess and label).
     guess = "unsure"
-    confidence = 0.0
     label = "placeholder"
 
     audit.log_decision(
@@ -248,8 +256,8 @@ def submit():
         creator_id=creator_id,
         guess=guess,
         model_score=model_score,
-        style_score=None,
-        combined_score=None,
+        style_score=style_score,
+        combined_score=combined_score,
         label=label,
     )
 
@@ -259,8 +267,9 @@ def submit():
         "guess": guess,
         "confidence": confidence,
         "label": label,
+        "combined_score": combined_score,
         "model_score": model_score,
-        "style_score": None,
+        "style_score": style_score,
         "status": "decided",
     })
 

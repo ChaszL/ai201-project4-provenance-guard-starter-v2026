@@ -72,9 +72,9 @@
 <!-- Write the rule in words, then give the numbers. What happens when the two
      signals disagree? -->
 
-**The rule:**
+**The rule:** A weighted average that trusts the model signal more than the style signal because small edits to style can change the scoring of the style a lot. 
 
-**The numbers:**
+**The numbers:** model 0.7, style 0.3. Human below 0.35, unsure 0.35–0.65, AI above 0.65.
 
 **Where it lives:** `scoring.py::combine_signals`
 
@@ -82,9 +82,11 @@
      somewhere else, say where. -->
 
 **A case where my two signals split, and what my rule does with it:**
+"Social media has changed how we communicate. A lot. It allows people to connect with friends and family across the world, share their experiences, and access information instantly - but it also has downsides! Many users struggle with comparison. And privacy? That is a growing concern for everyone."
 
-
-
+Model signal: 0.65 (AI)
+Style signal: 0.10 (Human)
+Rule: 0.7(0.65) + 0.3(0.10) = 0.49 (Unsure)
 ---
 
 ## Label Variants

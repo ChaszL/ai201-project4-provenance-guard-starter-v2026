@@ -51,12 +51,17 @@ def combine_signals(model_score: float, style_score: float) -> float:
 
     The weights in config.py are placeholders. Change them, or ignore them and
     write a different rule.
+
+    My rule: a weighted average, 0.7 model + 0.3 style (weights in config.py).
+    The style signal is the easier one to fool — a few cosmetic edits move it
+    a long way — so it gets the smaller say. Clamped to 0–1 and rounded to 4
+    places like the signals themselves.
     """
-    # TODO: replace this
-    return (
+    score = (
         config.WEIGHT_MODEL_SIGNAL * model_score
         + config.WEIGHT_STYLE_SIGNAL * style_score
     )
+    return round(min(max(score, 0.0), 1.0), 4)
 
 
 def score_to_label(score: float) -> tuple[str, str]:
