@@ -122,21 +122,26 @@
      diagnostics. -->
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/submit \
-  -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+$ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d '{\"text\": \"Hello my name is chasz whats yours?\", \"creator_id\": \"chasz\"}'
 ```
 
 ```json
-
+{
+  "confidence": 0.0,
+  "content_id": "39ee97e4-8905-43bd-924c-ee9f5af65e06",
+  "creator_id": "chasz",
+  "guess": "unsure",
+  "label": "placeholder",
+  "model_score": 0.0459,
+  "status": "decided",
+  "style_score": null
+}
 ```
 
 **An appeal**
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/appeal \
-  -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+$ 
 ```
 
 ```json
@@ -146,11 +151,48 @@ $ curl -X POST http://127.0.0.1:5000/appeal \
 **What the log shows afterwards**
 
 ```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+$ curl.exe http://127.0.0.1:5000/log?limit=3
 ```
 
 ```json
-
+{
+  "count": 3,
+  "entries": [
+    {
+      "combined_score": null,
+      "content_id": "a7dcd881-3f58-4d36-b4fe-e6821ebd2a32",
+      "creator_id": "chasz",
+      "guess": "unsure",
+      "label": "placeholder",
+      "model_score": 0.5113,
+      "status": "decided",
+      "style_score": null,
+      "timestamp": "2026-10-31T15:57:03+00:00"
+    },
+    {
+      "combined_score": null,
+      "content_id": "d357b8e6-0720-456d-97ca-2eed4c998cc3",
+      "creator_id": "chasz",
+      "guess": "unsure",
+      "label": "placeholder",
+      "model_score": 0.234,
+      "status": "decided",
+      "style_score": null,
+      "timestamp": "2026-10-31T15:57:03+00:00"
+    },
+    {
+      "combined_score": null,
+      "content_id": "39ee97e4-8905-43bd-924c-ee9f5af65e06",
+      "creator_id": "chasz",
+      "guess": "unsure",
+      "label": "placeholder",
+      "model_score": 0.0459,
+      "status": "decided",
+      "style_score": null,
+      "timestamp": "2026-10-31T16:07:26+00:00"
+    }
+  ]
+}
 ```
 
 ---

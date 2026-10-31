@@ -30,8 +30,13 @@ from flask import Flask, jsonify, request
 
 import audit
 import config
+import detector
 
 app = Flask(__name__)
+
+# Longest text /submit accepts. The detector only reads the first ~400 tokens,
+# so this is about refusing absurd payloads, not about scoring.
+MAX_TEXT_CHARS = 20_000
 
 
 # ── Rate limiting — UNIT 8 ────────────────────────────────────────────────────
@@ -199,17 +204,71 @@ def submit():
     what should this do when `text` is missing, empty, or enormous? A crash on
     a malformed input is one of the most common real failures there is.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
 
-    # TODO: delete this and build the route.
+    # Bad input is refused here, before anything is scored, and still leaves
+    # a trace in the log. Limits match the contract in milestone1.md.
+    if not isinstance(payload, dict):
+        return _reject("unknown", "invalid_json",
+                       "Send a JSON object with text and creator_id.", 400)
+
+    text = payload.get("text")
+    creator_id = payload.get("creator_id")
+
+    if not isinstance(creator_id, str) or not creator_id.strip():
+        return _reject("unknown", "missing_field",
+                       "Please include a creator_id.", 400)
+    if not isinstance(text, str) or not text.strip():
+        return _reject(creator_id, "missing_field",
+                       "Please include some text to check.", 400)
+    if len(text) > MAX_TEXT_CHARS:
+        return _reject(creator_id, "text_too_long",
+                       f"Text is too long. The limit is {MAX_TEXT_CHARS:,} characters.", 413)
+
+    # Signal one. The model loads on the first call, so that one is slow.
+    try:
+        model_score = detector.model_signal(text)
+    except ValueError:
+        return _reject(creator_id, "text_too_short",
+                       "Text is too short to check. Try a few sentences.", 422)
+    except detector.DetectorUnavailable:
+        return _reject(creator_id, "detector_unavailable",
+                       "The checker isn't available right now. Try again later.", 503)
+
+    content_id = str(uuid.uuid4())
+
+    # Placeholders until milestone 4 (second signal, combined score) and
+    # milestone 5 (the real guess and label).
+    guess = "unsure"
+    confidence = 0.0
+    label = "placeholder"
+
+    audit.log_decision(
+        content_id=content_id,
+        creator_id=creator_id,
+        guess=guess,
+        model_score=model_score,
+        style_score=None,
+        combined_score=None,
+        label=label,
+    )
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /submit isn't built yet — see the TODO in app.py.",
-        "you_sent": {
-            "text_length": len(payload.get("text", "")),
-            "creator_id": payload.get("creator_id"),
-        },
-    }), 501
+        "content_id": content_id,
+        "creator_id": creator_id,
+        "guess": guess,
+        "confidence": confidence,
+        "label": label,
+        "model_score": model_score,
+        "style_score": None,
+        "status": "decided",
+    })
+
+
+def _reject(creator_id: str, error: str, message: str, status: int):
+    """Log a refused request and answer with the error shape from the contract."""
+    audit.log_rejection(creator_id=creator_id, reason=error)
+    return jsonify({"error": error, "message": message}), status
 
 
 @app.post("/appeal")
