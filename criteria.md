@@ -45,11 +45,11 @@ Two things worth knowing before you pick numbers:
 ## 1.
 
 <!-- Your criterion. It must name a number. -->
-
+Of 10 pieces of writing I wrote myself, at most 1 is labelled high-confidence AI, in every one of the three trials
 
 
 **Why this target:**
-
+A wrong label can cost someone a lot. So making sure this is accurate on plain writing helps keep a writer from suffering unneccesary accusations
 
 
 ---
@@ -57,11 +57,11 @@ Two things worth knowing before you pick numbers:
 ## 2.
 
 <!-- Your criterion. -->
-
+Across 5 clearly-AI texts and 5 clearly-human texts, the average combined score of the AI set is at least 30% higher than the average of the human set.
 
 
 **Why this target:**
-
+If my clearly-AI and clearly-human texts score close together, the thresholds are basically guessing. A gap of at least 0.30 between their average scores shows the labeler is actually telling them apart, not guessing.
 
 
 ---
@@ -69,11 +69,11 @@ Two things worth knowing before you pick numbers:
 ## 3.
 
 <!-- Your criterion. -->
-
+Each of the three labels appears at least once across my test inputs, in every trial.
 
 
 **Why this target:**
-
+Everything cannot be absolutley AI or human, some can be unsure and If a unsure label cannot be reached during testing, that means there is a bug in my ranges.
 
 
 ---
@@ -81,11 +81,11 @@ Two things worth knowing before you pick numbers:
 ## 4.
 
 <!-- Your criterion. -->
-
+For all missing text messages, all will return an error code other than 500 and a JSON error message will be given. 
 
 
 **Why this target:**
-
+This is important so the writer knows why their work could not be labeled and also lets them know what specific issue was encountered. 
 
 
 ---
@@ -93,11 +93,11 @@ Two things worth knowing before you pick numbers:
 ## 5.
 
 <!-- Your criterion. -->
-
+For all unsure answers, a reason for why the message is labeled as unsure will be given.
 
 
 **Why this target:**
-
+Unsure is the label a plain wirter would most likely get. Without an explanation to why their writing was labeled unsure, the writer has no way of knowing weather they are being slightly accused or slightly seen as human. 
 
 
 ---

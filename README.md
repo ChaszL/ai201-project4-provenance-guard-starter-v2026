@@ -53,19 +53,19 @@
 
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** How predictable the text is to gpt2, mapped from 0–1. Low perplexity gives a high, AI-like score.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** An LLM writes by picking likely next tokens, so its output is text a model finds likely. Humans make choices a model wouldn't rank first.
 
-**What it can't see:**
+**What it can't see:** Authorship. Plain writing from a human is just as predictable and scores as AI. AI text pushed toward rare words or paraphrased scores as human. It only reads the first 400 tokens.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** The text's shape: sentence-length spread, type-token ratio and punctuation density. It doesn't understand a word.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** AI generated text uses a band of vocabulary and tidy punctuation. Human writing is lumpier and can use more punctuation and less vocabulary.
 
-**What it can't see:**
+**What it can't see:** Typos, split sentences, extra dashes or a pasted quotation move it without changing who wrote the text. Type-token ratio falls with length. Plain human writing has the same even shape as AI writing, so this signal shares signal one's worst false positive instead of catching it.
 
 ### The combining rule
 
