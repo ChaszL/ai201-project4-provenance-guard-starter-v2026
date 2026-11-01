@@ -38,8 +38,13 @@
 
 <!-- The path a submission takes, from arriving to the label a reader sees.
      Six or seven steps — this is the trace you wrote in Milestone 1. -->
-
-
+1. **The request arrives at `/submit`** (`app.py`). The text from the user and their Id is sent in JSON.
+2. **The input is checked.** Non Json request and request without text, creator id, text over 20,000 characters are rejected and return an error code.
+3. **Signal one scores it** (`detector.py`). This checks the text for how predicitable the next word is. AI text are very predicatble while Human text are not. This also gives model_score
+4. **Signal two scores it** (`stylometry.py`). This looks at the sentances and punctionation as well as the word variety to see if the users text is AI or Human. This also gives style_score
+5. **The scores are combined** (`scoring.py::combine_signals`). Rule: 0.7 model + 0.3 style = combined_score
+6. **The score becomes a label** (`scoring.py::score_to_label`). Text below 0.35 human, 0.35–0.65 unsure, above 0.65 AI
+7. **It's logged and sent back** (`audit.py`). The decision is saved to logs with the content_id, all three scores, the label and a status of decided. The user gets back the label and a content_id they can use to appeal if they think the result is wrong.
 
 ---
 
@@ -98,15 +103,16 @@ Rule: 0.7(0.65) + 0.3(0.10) = 0.49 (Unsure)
 
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | 0.00 - 0.35 | We think this looks like Human written text. |
+| unsure | 0.35 - 0.65 | We are unsure whether this is Human or AI written text. This is not an accusation, your response shows signs of both human and AI text. |
+| high-confidence AI | 0.65 - 1.00 | We think this shows signs of being AI text. You can appeal this if it is human written. |
 
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
      sounding like an accusation, because the person reading it may well have
      written every word themselves. -->
 
+I worded the unsure in that way so that the user knows its not an accusation and that the labeler genuinely cannot tell whether it is written by a human or AI. I also specified that their text could show signs of both which would confuse the labeler. 
 
 
 ---
@@ -143,11 +149,18 @@ $ curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/js
 **An appeal**
 
 ```bash
-$ 
+$ curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d '{\"content_id\": \"4b2d7bee-51b9-416c-bf26-419c0d0f4bf0\", \"reasoning\": \"I wrote this essay myself for a class.\"}'
 ```
 
 ```json
-
+{
+  "appealed_at": "2026-11-01T16:48:13+00:00",
+  "content_id": "4b2d7bee-51b9-416c-bf26-419c0d0f4bf0",
+  "message": "Thanks \u2014 your appeal is recorded. A person will review this result. Nothing about it changes until they do.",
+  "original_guess": "ai",
+  "original_label": "We think this shows signs of being AI text. You can appeal this if it is human written.",
+  "status": "under_review"
+}
 ```
 
 **What the log shows afterwards**
@@ -161,37 +174,30 @@ $ curl.exe http://127.0.0.1:5000/log?limit=3
   "count": 3,
   "entries": [
     {
-      "combined_score": null,
-      "content_id": "a7dcd881-3f58-4d36-b4fe-e6821ebd2a32",
-      "creator_id": "chasz",
-      "guess": "unsure",
-      "label": "placeholder",
-      "model_score": 0.5113,
-      "status": "decided",
-      "style_score": null,
-      "timestamp": "2026-10-31T15:57:03+00:00"
+      "creator_id": "unknown",
+      "event": "rejected",
+      "reason": "invalid_json",
+      "status": "rejected",
+      "timestamp": "2026-11-01T16:42:36+00:00"
     },
     {
-      "combined_score": null,
-      "content_id": "d357b8e6-0720-456d-97ca-2eed4c998cc3",
+      "combined_score": 0.6785,
+      "content_id": "4b2d7bee-51b9-416c-bf26-419c0d0f4bf0",
       "creator_id": "chasz",
-      "guess": "unsure",
-      "label": "placeholder",
-      "model_score": 0.234,
+      "guess": "ai",
+      "label": "We think this shows signs of being AI text. You can appeal this if it is human written.",
+      "model_score": 0.587,
       "status": "decided",
-      "style_score": null,
-      "timestamp": "2026-10-31T15:57:03+00:00"
+      "style_score": 0.8921,
+      "timestamp": "2026-11-01T16:46:58+00:00"
     },
     {
-      "combined_score": null,
-      "content_id": "39ee97e4-8905-43bd-924c-ee9f5af65e06",
+      "content_id": "4b2d7bee-51b9-416c-bf26-419c0d0f4bf0",
       "creator_id": "chasz",
-      "guess": "unsure",
-      "label": "placeholder",
-      "model_score": 0.0459,
-      "status": "decided",
-      "style_score": null,
-      "timestamp": "2026-10-31T16:07:26+00:00"
+      "event": "appeal",
+      "reasoning": "I wrote this essay myself for a class.",
+      "status": "under_review",
+      "timestamp": "2026-11-01T16:48:13+00:00"
     }
   ]
 }
@@ -203,15 +209,15 @@ $ curl.exe http://127.0.0.1:5000/log?limit=3
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked it to write stylometry.py for me
+- *What came back:* It built the entire stylometry.py file for me
+- *What I changed:* I changed the file to start working with a minimum of 2 sentances and added more characters to the distinctive puncuation list. 
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked it to build the /sumbit and /appeal 
+- *What came back:* It built both the functions for /submit and /appeal
+- *What I changed:* I did not change anything everything looked fine and I tested it by submitting my own essay and appealing it. 
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 

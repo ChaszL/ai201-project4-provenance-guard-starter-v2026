@@ -57,7 +57,7 @@ A wrong label can cost someone a lot. So making sure this is accurate on plain w
 ## 2.
 
 <!-- Your criterion. -->
-Across 5 clearly-AI texts and 5 clearly-human texts, the average combined score of the AI set is at least 30% higher than the average of the human set.
+Across 5 clearly-AI texts and 5 clearly-human texts, the average combined score of the AI set is at least 0.30 higher than the average of the human set.
 
 
 **Why this target:**

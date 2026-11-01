@@ -40,6 +40,9 @@ app = Flask(__name__)
 # so this is about refusing absurd payloads, not about scoring.
 MAX_TEXT_CHARS = 20_000
 
+# Longest reasoning /appeal accepts, from the contract in milestone1.md.
+MAX_REASONING_CHARS = 5_000
+
 
 # ── Rate limiting — UNIT 8 ────────────────────────────────────────────────────
 # Off until you turn it on. In unit 8, Milestone 1:
@@ -245,11 +248,9 @@ def submit():
     # (0.5 – 1.0). Not the probability of AI — see the contract in milestone1.md.
     confidence = round(max(combined_score, 1.0 - combined_score), 4)
 
-    content_id = str(uuid.uuid4())
+    guess, label = scoring.score_to_label(combined_score)
 
-    # Placeholders until milestone 5 (the real guess and label).
-    guess = "unsure"
-    label = "placeholder"
+    content_id = str(uuid.uuid4())
 
     audit.log_decision(
         content_id=content_id,
@@ -300,14 +301,55 @@ def appeal():
     to the person on the other end. It's the only thing standing between a
     wrong accusation and nothing at all.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _reject("unknown", "invalid_json",
+                       "Send a JSON object with content_id and reasoning.", 400)
 
-    # TODO: delete this and build the route.
+    content_id = payload.get("content_id")
+    reasoning = payload.get("reasoning")
+
+    if not isinstance(content_id, str) or not content_id.strip():
+        return _reject("unknown", "missing_field",
+                       "Please include the content_id from your result.", 400)
+    if not isinstance(reasoning, str) or not reasoning.strip():
+        return _reject("unknown", "missing_field",
+                       "Please tell us why you think the result is wrong.", 400)
+    if len(reasoning) > MAX_REASONING_CHARS:
+        return _reject("unknown", "reasoning_too_long",
+                       f"Please keep reasoning under {MAX_REASONING_CHARS:,} characters.", 413)
+
+    # The original decision is the entry with no "event" — appeals and
+    # rejections both carry one. No decision means the id is wrong: say so
+    # loudly rather than appearing to accept an appeal for nothing.
+    entries = audit.entries_for(content_id.strip())
+    decision = next((e for e in entries if "event" not in e), None)
+    if decision is None:
+        return _reject("unknown", "unknown_content_id",
+                       "We couldn't find a result with that content_id. "
+                       "Check it matches the one in your result exactly.", 404)
+
+    # creator_id comes from the original decision, never the request, so an
+    # appeal is always filed against the right writer.
+    creator_id = decision.get("creator_id", "unknown")
+
+    if any(e.get("event") == "appeal" for e in entries):
+        return _reject(creator_id, "already_under_review",
+                       "This result has already been appealed and is waiting for review.", 409)
+
+    entry = audit.log_appeal(content_id=decision["content_id"],
+                             creator_id=creator_id,
+                             reasoning=reasoning.strip())
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-        "you_sent": payload,
-    }), 501
+        "content_id": decision["content_id"],
+        "status": entry["status"],
+        "original_guess": decision.get("guess"),
+        "original_label": decision.get("label"),
+        "appealed_at": entry["timestamp"],
+        "message": "Thanks — your appeal is recorded. A person will review this "
+                   "result. Nothing about it changes until they do.",
+    })
 
 
 # ── Already works ─────────────────────────────────────────────────────────────

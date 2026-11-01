@@ -38,7 +38,7 @@ TTR_WINDOW = 40
 
 # Marks that vary more between writers than commas and full stops do.
 # A hyphen inside a word ("well-known") isn't here; a spaced " - " dash is.
-DISTINCTIVE_PUNCTUATION = [";", ":", "—", "–", " - ", "(", "!", "?", '"', "…"]
+DISTINCTIVE_PUNCTUATION = [";", ":", "—", "–", " - ", "(", "!", "?", '"', "…", ")", "[", "]"]
 
 # Where each raw measure counts as fully AI-like (low) and fully human (high).
 # Read off the calibration texts: AI prose had spread 0.10–0.34 and punctuation
@@ -54,7 +54,7 @@ STYLE_ANCHORS = {
 STYLE_WEIGHTS = {"spread": 0.5, "punct": 0.3, "ttr": 0.2}
 
 # Below this, style_signal returns 0.5: too little text to have a shape.
-MIN_SENTENCES = 3
+MIN_SENTENCES = 2
 MIN_WORDS = 20
 
 
