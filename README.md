@@ -386,17 +386,54 @@ whose work got caught by it:
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. C1: Of 10 pieces of writing I wrote myself, at most 1 is labelled high-confidence AI, in every one of the three trials. | 1/10 | 6/10 | 6/10 | 6/10 | MISSED |
+| 2. C2: Across 5 clearly-AI texts and 5 clearly-human texts, the average combined score of the AI set is at least 0.30 higher than the average of the human set. | ≥ +0.30 | −0.107 | −0.107 | −0.107 | MISSED |
+| 3. C3: Each of the three labels appears at least once across my test inputs, in every trial. | 3/3 | 3/3 | 3/3 | 3/3 | PASS |
+| 4. C4: For all missing text messages, all will return an error code other than 500 and a JSON error message will be given. | 4/4 | 4/4 | 4/4 | 4/4 | PASS |
+| 5. C5: For all unsure answers, a reason for why the message is labeled as unsure will be given. | 3/3 | 0/3 | 0/3 | 0/3 | MISSED |
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
 ```json
-
+[
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"creator_id\": \"eval_c4_missing\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "   \n\t "
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"text\": null, \"creator_id\": \"eval_c4_null\"}"
+  }
+]
 ```
 
 **Diagnoses**
