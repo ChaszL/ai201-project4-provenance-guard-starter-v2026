@@ -386,7 +386,7 @@ whose work got caught by it:
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. C1: Of 10 pieces of writing I wrote myself, at most 1 is labelled high-confidence AI, in every one of the three trials. | 1/10 | 6/10 | 6/10 | 6/10 | MISSED |
+| 1. C1: Of 10 pieces of writing I wrote myself, at most 1 is labelled high-confidence AI, in every one of the three trials. | ≤ 1/10 | 6/10 | 6/10 | 6/10 | MISSED |
 | 2. C2: Across 5 clearly-AI texts and 5 clearly-human texts, the average combined score of the AI set is at least 0.30 higher than the average of the human set. | ≥ +0.30 | −0.107 | −0.107 | −0.107 | MISSED |
 | 3. C3: Each of the three labels appears at least once across my test inputs, in every trial. | 3/3 | 3/3 | 3/3 | 3/3 | PASS |
 | 4. C4: For all missing text messages, all will return an error code other than 500 and a JSON error message will be given. | 4/4 | 4/4 | 4/4 | 4/4 | PASS |
@@ -396,6 +396,7 @@ whose work got caught by it:
 that produced it:
 
 ```json
+Produced by run_eval.py::main against app.py::submit. Criterion 4, Trial 1.
 [
   {
     "status": 400,
@@ -452,7 +453,38 @@ that produced it:
 
      Look for a pattern. Five failures on one signal is one problem, not five. -->
 
+### Criteria
+**C1 — Missed (6/10 of my own writing labelled AI).**
+**Stage:** signal one. **Mechanism:** My formal essays repeat phrases like "The United States" and "Rehabilitation", so GPT-2 finds them predictable and scores them as AI. Only my casual messages came back human. Example: Gun control essay model 0.79 → 0.78 AI; casual GraphRAG note model 0.05 → 0.21 human.
 
+**C2 — Missed (gap −0.107, target +0.30).**
+**Stage:** signal one. **Mechanism:** My AI texts used rare technical words like chemosynthesis and Staphylococcus that surprised GPT-2, so they scored low. My human texts were formal essays that scored high. The gap went backwards. AI set avg 0.53 (0/5 labelled AI); human set avg 0.64 (4/5 labelled AI).
+
+**C5 — Missed (no unsure answers to check).**
+**Stage:** label mapping. **Mechanism:** the unsure label is one fixed sentence chosen by score band and never uses the signal scores, so it can't give a reason. My C5 texts also all scored AI instead of unsure, which is the same problem as C1.
+
+### Attacks
+
+**FP01–FP07 broke**
+All seven are plain, formal, rubric, template, technical, or careful non-native writing. 
+**Stage:** signal one, with signal two agreeing. 
+**Mechanism:** Common phrases and repeated terms are predictable to GPT-2, and even sentences look uniform to signal two, so both score AI. Signal one's 0.7 weight locks it in. Scores 0.66–0.84; worst is FP06 at model 0.88 / style 0.73 = 0.84.
+
+**EV01, EV05, EV08 PI02 broke**
+**Stage:** signal one. 
+**Mechanism:** typos, heavy editing, very short text, and fake system-message formatting all surprise GPT-2, so the model score drops. On EV01, signal two actually caught it (0.75), but signal one (0.16) outweighed it. Combined scores 0.23–0.34.
+
+**EV02, EV03, EV06, EV07, EV09 broke (AI text labelled unsure).**
+**Stage:** signal two and the combining rule. 
+**Mechanism:** Breaking up sentences, mixing long and short ones or adding punctuation made signal two read the text as human. Averaged with the model score, each landing between 0.35 and 0.65. Example: EV02 model 0.59 / style 0.21 = 0.48.
+
+**MF03–MF07 broke (garbage input given a confident label).**
+**Stage:** the route. 
+**Mechanism:** The route checks that text exists and its length, but not that it's real words. Control characters, punctuation, one long word, emoji, and right-to-left script all reach the signals. Signal two returns a neutral 0.5, so signal one's extreme score (0.00 or 0.99) decides alone. Example: emoji-only = 0.85 AI.
+
+### Pattern
+
+Most failures trace to signal one: predictable text reads as AI and surprising text reads as human. It's one problem seen from both sides, and at 0.7 weight it decides most outcomes.
 
 ---
 
